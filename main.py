@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import utils as ut
 
-cap = cv2.VideoCapture('/home/bombo/Scrivania/video.avi')
+cap = cv2.VideoCapture('video.avi')
 nFrame = 0
 T = 20
 
