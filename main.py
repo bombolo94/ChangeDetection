@@ -4,7 +4,7 @@ import utils as ut
 
 cap = cv2.VideoCapture('video.avi')
 nFrame = 0
-T = 20
+T = 40
 med = 100
 
 while cap.isOpened():
@@ -22,12 +22,14 @@ while cap.isOpened():
         if nFrame == med:
             bckI = (s/med).astype(np.uint8)
 
-        median = cv2.GaussianBlur(gray,(5,5),0)
-        c_mask = cv2.threshold(cv2.absdiff(median,bckI), T, 255, cv2.THRESH_BINARY)[1]
 
+        c_mask = cv2.threshold(cv2.absdiff(gray,bckI), T, 255, cv2.THRESH_BINARY)[1]
+        #median = cv2.medianBlur(c_mask, 5)
 
         # Morphology
-        morf = cv2.morphologyEx(c_mask, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (12, 12)))
+        kernel = np.array([[0,1,1],[0,1,0],[1,1,1]]).astype(np.uint8)
+        morf = cv2.dilate(c_mask,kernel)
+        morf = cv2.morphologyEx(morf, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (12, 12)))
         morf = cv2.morphologyEx(morf, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)))
 
         # Blob Analysis
@@ -47,9 +49,9 @@ while cap.isOpened():
 
         im_with_keypoints = cv2.drawKeypoints(gray, keypoints, np.array([]), (0, 0, 155), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
         # End Blob Analysis
-        ut.show(Bacground=bckI, Mask=c_mask, Blob=im_with_keypoints)
+        ut.show(Bacground=bckI, Mask=morf, Blob=im_with_keypoints)
         key = cv2.waitKey(0)
-        bckU = ut.updating_background(morf, gray, bckI, 0.1)
+        bckU = ut.updating_background(morf, gray, bckI, 0.2)
         bckI = bckU.copy()
     nFrame+=1
 # When everything done, release the capture
