@@ -21,28 +21,25 @@ while cap.isOpened():
     else:
         if nFrame == med:
             bckI = (s/med).astype(np.uint8)
-        '''c_mask = cv2.threshold(cv2.absdiff(gray, bckI), T, 255, cv2.THRESH_BINARY)[1]
-        cv2.imshow("Threshold-Substraction", c_mask)
-        cv2.imshow("BckI", bckI)
-        # Morphology
 
-        kernel = np.array([[0,1,0],[1,1,1],[0,1,1]])
+        substraction = cv2.absdiff(gray, bckI)
+        #c_mask = cv2.threshold(substraction, T, 255, cv2.THRESH_BINARY)[1]
+
+        c_mask = ut.subst(substraction, T)
+
+        #Morphology
+        kernel = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 1]])
         morf = cv2.dilate(c_mask, kernel, iterations=0)
         kernel = np.array([[0, 0, 0, 0, 0, 0, 0],
-       [0, 0, 1, 1, 1, 0, 0],
-       [0, 0, 1, 1, 1, 0, 0],
-       [0, 0, 1, 1, 1, 0, 0],
-       [0, 0, 1, 1, 1, 0, 0],
-       [0, 0, 1, 1, 1, 0, 0],
-       [0, 0, 0, 0, 0, 0, 0]])
+                           [0, 0, 1, 1, 1, 0, 0],
+                           [0, 0, 1, 1, 1, 0, 0],
+                           [0, 0, 1, 1, 1, 0, 0],
+                           [0, 0, 1, 1, 1, 0, 0],
+                           [0, 0, 1, 1, 1, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0]])
         morf = cv2.morphologyEx(morf, cv2.MORPH_CLOSE, cv2.getStructuringElement(kernel))
-        morf = cv2.morphologyEx(morf, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7,7)))
-        
-        denoised = cv2.GaussianBlur(opening, (5, 5), 0)
-        filter = cv2.Laplacian(denoised, cv2.CV_64F)
-        cv2.imshow('Laplacian Filter', filter)
+        morf = cv2.morphologyEx(morf, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7)))
 
-        cv2.imshow("Morphology", morf)
 
         # Blob Analysis
 
@@ -55,24 +52,19 @@ while cap.isOpened():
         params.minArea = 500
 
         detector = cv2.SimpleBlobDetector_create(params)
-        
+
         # Detect blobs
         rv = 255 - morf
         keypoints = detector.detect(rv)
 
         # keypoints is a list of keypoint, which include the coordinates (of the centres) of the blobs, and their size
 
-        im_with_keypoints = cv2.drawKeypoints(morf, keypoints, np.array([]), (0, 0, 155),
-                                              cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-        cv2.imshow('BLOB', im_with_keypoints)
+        im_with_keypoints = cv2.drawKeypoints(morf, keypoints, np.array([]), (0, 0, 155), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
         # End Blob Analysis
-
-        # Backround Updating
-        bckU = ut.updating_background(c_mask, gray, bckI, 0.5)
-        bckI = bckU.copy()'''
-    nFrame = nFrame + 1
-    cv2.imshow('Gray', gray)
-    key = cv2.waitKey(0)
+        ut.show(Bacground=bckI, Mask=c_mask, Morf=morf, Blob= im_with_keypoints)
+        key = cv2.waitKey(0)
+        bckU = ut.updating_background(morf, gray, bckI, 0.2)
+        bckI = bckU.copy()
 
 # When everything done, release the capture
 cap.release()
