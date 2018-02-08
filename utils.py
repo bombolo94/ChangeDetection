@@ -52,8 +52,8 @@ def getforeground(self, frame, alpha):
     return dif
 
 def denoise(frame):
-    frame = cv2.medianBlur(frame, 5)
-    frame = cv2.GaussianBlur(frame, (5, 5), 0)
+    frame = cv2.medianBlur(frame, 3)
+    frame = cv2.GaussianBlur(frame, (3, 3), 0)
 
     return frame
 
