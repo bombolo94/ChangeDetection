@@ -81,15 +81,17 @@ while run:
             # End Blob Analysis
 
             # Contorni
-            #img = cv2.GaussianBlur(morf, (3, 3), 0)
+            morf = cv2.GaussianBlur(morf, (3, 3), 0)
             # convolute with proper kernels
-            laplacian = cv2.Laplacian(morf, cv2.CV_64F)
+            prov = morf
+            _, contourns, _ = cv2.findContours(morf, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+            cv2.drawContours(frame, contourns, -1, (0, 255, 0), 2)
 
 
 
             # fine contorni
 
-            ut.show(Differenza=foreground, Morf=morf, Blob=im_with_keypoints, Edge= laplacian)
+            ut.show(Differenza=foreground, Morf=morf, Blob=im_with_keypoints, Cont=frame)
             cv2.waitKey(0)
             '''
             bckU = ut.updating_background(morf, gray, bckI, 0.2)
