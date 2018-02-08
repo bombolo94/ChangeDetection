@@ -16,7 +16,9 @@ else:
 while run:
     ret, frame = camera.read()
     if ret is True:
+
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
         # this part is background initialisation according to ChangeDetection.pdf
         if nFrame < med:
             if nFrame == 0:
@@ -27,28 +29,20 @@ while run:
         # this part is background subst and updating according to ChangeDetection.pdf
         else:
             if nFrame == med:
-                bckI = (s/med)
-            #gray = ut.denoise(gray)
-            foreground = ut.getforeground(bckI, gray, 0.5)
-            morf = cv2.threshold(foreground, T, 255, cv2.THRESH_BINARY)[1]
+                backgroundInit = (s / med)
 
-            kernel = np.ones((2, 2), np.uint8)
-            morf = cv2.dilate(morf, kernel, iterations=1)
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
-            morf = cv2.morphologyEx(morf,cv2.MORPH_CLOSE, kernel)
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            morf = cv2.morphologyEx(morf, cv2.MORPH_OPEN, kernel)
-            '''dif = cv2.absdiff(gray, bckI)
-    
-            morf = cv2.threshold(dif, T, 255, cv2.THRESH_BINARY)[1]
-    
-            # Morphology
-            element = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    
-            morf = cv2.dilate(c_mask, element, iterations=1)
-            morf = cv2.erode(morf, element, iterations=1)
-            morf = cv2.morphologyEx(c_mask, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5)))
-            morf = cv2.morphologyEx(morf, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7)))'''
+            background = gray * 0.5 + backgroundInit * (1 - 0.5)
+            imgMorphology = cv2.absdiff(gray.astype(np.uint8), background.astype(np.uint8))
+            #imgMorphology = ut.denoise(imgMorphology, 3)
+            imgMorphology = cv2.threshold(imgMorphology.astype(np.uint8), 20, 255, cv2.THRESH_BINARY)[1]
+            #
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3,3))
+            imgMorphology = cv2.dilate(imgMorphology, kernel, iterations = 0)
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (12, 12))
+            imgMorphology = cv2.morphologyEx(imgMorphology, cv2.MORPH_CLOSE, kernel)
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
+            imgMorphology = cv2.morphologyEx(imgMorphology, cv2.MORPH_OPEN, kernel)
+
             # Blob Analysis
 
             params = cv2.SimpleBlobDetector_Params()
@@ -57,8 +51,8 @@ while run:
             params.maxThreshold = 256
 
             params.filterByArea = True
-            params.minArea= 50
-            params.maxArea= (morf.size)*1/4
+            params.minArea = 50
+            params.maxArea = imgMorphology.size * (1 / 4)
 
             params.filterByCircularity = False
             params.minCircularity = 0
@@ -68,34 +62,35 @@ while run:
             params.filterByConvexity = False
             params.filterByColor = False
 
-
             detector = cv2.SimpleBlobDetector_create(params)
 
             # Detect blobs
-            rv = 255 - morf
-            keypoints = detector.detect(rv)
+            rv = 255 - imgMorphology
+            kp = detector.detect(rv)
 
-            # keypoints is a list of keypoint, which include the coordinates (of the centres) of the blobs, and their size
+            # kp is a list of kp, which include the coordinates (of the centres) of the blobs,
+            #  and their size
 
-            im_with_keypoints = cv2.drawKeypoints(gray, keypoints, np.array([]), (0, 0, 155), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+            imgBlob = cv2.drawKeypoints(gray, kp, np.array([]), (0, 0, 155), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
             # End Blob Analysis
 
-            # Contorni
-            morf = cv2.GaussianBlur(morf, (3, 3), 0)
-            # convolute with proper kernels
-            prov = morf
-            _, contourns, _ = cv2.findContours(morf, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-            cv2.drawContours(frame, contourns, -1, (0, 255, 0), 2)
+            # FindCount
+
+            _, cnt, _ = cv2.findContours(imgMorphology, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+            cv2.drawContours(frame, cnt, -1, (0, 255, 0), 2)
 
 
 
-            # fine contorni
+            for i in range (len(cnt)):
+                cn = cnt[i]
+                area = cv2.contourArea(cn)
+                print(i)
+                print(area)
 
-            ut.show(Differenza=foreground, Morf=morf, Blob=im_with_keypoints, Cont=frame)
+            ut.show(Morf=imgMorphology, Contourns=frame)
+           # ut.show(IMG= imgMorphology)
             cv2.waitKey(0)
-            '''
-            bckU = ut.updating_background(morf, gray, bckI, 0.2)
-            bckI = bckU'''
+
 
         nFrame += 1
     else:
