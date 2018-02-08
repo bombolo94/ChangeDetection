@@ -7,20 +7,8 @@ screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 dx = int(screen_width / 4)
 dy = int(screen_height / 2)
-label_bar_height = 65
+label_bar_height = 70
 
-
-def subst(img, T):
-
-    imgo = img.copy()
-    width, height = img.shape[:2]
-    for row in range(width):
-        for col in range(height):
-            if img[row, col] > T:
-                imgo[row, col] = 255
-            else:
-                img[row, col] = 0
-    return imgo
 
 
 def show(wait=False, **kwargs):
@@ -49,10 +37,24 @@ def updating_background(c_mask, frame, bck, alpha):
     for row in range(width):
         for col in range(height):
             if c_mask[row, col] == 0:
-                p = alpha * frame[row, col] + (1 - alpha) * bck[row, col]
+                p = alpha * frame[row, col]+ (1 - alpha) * bck[row, col]
             else:
                 p = bck[row, col]
             bck_upd[row, col] = p
+
     return bck_upd
+
+
+def getforeground(self, frame, alpha):
+
+    self = frame * alpha + self * (1 - alpha)
+    dif = cv2.absdiff(self.astype(np.uint8), frame)
+    return dif
+
+def denoise(frame):
+    frame = cv2.medianBlur(frame, 5)
+    frame = cv2.GaussianBlur(frame, (5, 5), 0)
+
+    return frame
 
 
