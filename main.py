@@ -31,19 +31,20 @@ while run:
                 background = backgroundI
 
             foreground = cv2.absdiff(gray.astype(np.uint8), background.astype(np.uint8))
-            foreground = cv2.GaussianBlur(foreground, (15,15),-1)
-            c_mask = cv2.threshold(foreground.astype(np.uint8), T, 255, cv2.THRESH_BINARY)[1]
+            foreground = cv2.GaussianBlur(foreground, (7,7),-1)
+            foreground = cv2.medianBlur(foreground, 7)
+            imgMorphology = cv2.threshold(foreground.astype(np.uint8), T, 255, cv2.THRESH_BINARY)[1]
 
             # imgMorphology = cv2.medianBlur(imgMorphology, 17)
 
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 9))
-            imgMorphology = cv2.dilate(c_mask, kernel, iterations=1)
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (12, 12))
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+            imgMorphology = cv2.dilate(imgMorphology, kernel, iterations=1)
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 20))
             imgMorphology = cv2.morphologyEx(imgMorphology, cv2.MORPH_CLOSE, kernel)
-            # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-            # imgMorphology = cv2.morphologyEx(imgMorphology, cv2.MORPH_OPEN, kernel)
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 9))
-            imgMorphology = cv2.dilate(imgMorphology, kernel, iterations=0)
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+            imgMorphology = cv2.morphologyEx(imgMorphology, cv2.MORPH_OPEN, kernel)
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+            imgMorphology = cv2.dilate(imgMorphology, kernel, iterations=1)
 
             # Blob Analysis
 
@@ -53,8 +54,8 @@ while run:
             params.maxThreshold = 256
 
             params.filterByArea = True
-            params.minArea = 50
-            params.maxArea = imgMorphology.size * (1 / 4)
+            params.minArea = 100
+            params.maxArea = imgMorphology.size * (2 / 4)
 
             params.filterByCircularity = False
             params.minCircularity = 0
@@ -70,9 +71,6 @@ while run:
             rv = 255 - imgMorphology
             kp = detector.detect(rv)
 
-            # kp is a list of kp, which include the coordinates (of the centres) of the blobs,
-            #  and their size
-
             imgBlob = cv2.drawKeypoints(gray, kp, np.array([]), (0, 0, 155), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
             # End Blob Analysis
 
@@ -86,46 +84,36 @@ while run:
             sobelx = cv2.Sobel(frame, cv2.CV_64F, 1, 0, ksize=3)
             sobely = cv2.Sobel(frame, cv2.CV_64F, 0, 1, ksize=3)
             for i in range(len(cnt)):
-                if nFrame == 123:
-                    y = cnt[i][0][0][0]
-                    x = cnt[i][0][0][1]
-                    f = frame[x, y]
-                    val = lap[x, y]
-                    valx = sobelx[x, y]
-                    valy = sobely[x, y]
-                    print(f)
-                    print(val)
-                    print(valx)
-                    print(valy)
-                    print("-------")
-                    cv2.circle(lap, (y, x), 6, (0, 0, 255), -1)
-                    ut.show(Laplacian=lap)
-                    cv2.waitKey(0)
-                if nFrame == 335:
-                    # cv[0][0][0] è 256 e cv[0][0][1] è 40
-                    y = cnt[i][0][0][0]
-                    #print(y)
-                    x = cnt[i][0][0][1]
-                    #print(x)
-                    f = frame[x,y]
-                    val = lap[x, y]
-                    valx = sobelx[x, y]
-                    valy = sobely[x, y]
-                    print(f)
-                    print(val)
-                    print(valx)
-                    print(valy)
-                    print("-------")
-                    cv2.circle(lap, (y, x), 6, (0, 0, 255), -1)
-                    ut.show(Laplacian=lap)
-                    cv2.waitKey(0)
-                cv2.drawContours(cp, cnt[i], -1, (0, 0, 255), 2)
+                #if nFrame > 498:
+                    # cnt[0][0][0][0] è 256 e cnt[0][0][0][1] è 40
+                    size = len(cnt[i])
+                    for j in range(len(cnt[i])):
+                        yj = cnt[i][j][0][0]
+                        xj = cnt[i][j][0][1]
+                        v = lap[xj, yj][0]
+                        if j == 0:
+                            sG = lap[xj, yj][0]
+                        else:
+                            sG += lap[xj, yj][0]
+                    mG = round(abs(sG/len(cnt[i])))
+                    perimeter = round(cv2.arcLength(cnt[i], True))
+                    if mG <=1:
+                        if perimeter > 90:
+                            if perimeter < 115:
+                                for j in range(len(cnt[i])):
+                                    yj = cnt[i][j][0][0]
+                                    xj = cnt[i][j][0][1]
+                                    cv2.circle(frame, (yj, xj), 2, (0, 255, 0), -1)
+                                #ut.show(Laplacian=lap)
+                                #cv2.waitKey(0)
+
+                    #ut.show(Laplacian=lap)
+                    #cv2.waitKey(0)
+                    cv2.drawContours(cp, cnt[i], -1, (0, 0, 255), 1)
             # color = np.random.randint(0, 255, (3)).tolist()
 
-
-
-            ut.show(Laplacian=lap ,Morpholgy=imgMorphology, Contourns=frame)
-            cv2.waitKey(1)
+            ut.show(Morpholgy=imgMorphology, Contourns=frame, Blob= imgBlob)
+            cv2.waitKey(10)
             print(nFrame)
 
         nFrame += 1
@@ -135,25 +123,16 @@ while run:
 camera.release()
 cv2.destroyAllWindows()
 
-''' 
-            if nFrame == 334:
-                
-                for i in range(len(cnt)):
-                    cn = cnt[i]
-                    x, y, w, h = cv2.boundingRect(cn)
-                    cv2.rectangle(cp, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                    val = lap[y, x].astype(np.uint8)
-                    f = frame[y,x].astype(np.uint8)
-                    print(val)
-                    print("- ")
-                    print(f)
-                    print("---------")
-                    rect = cv2.minAreaRect(cn)
-                    box = cv2.boxPoints(rect)
-                    # convert all coordinates floating point values to int
-                    box = np.int0(box)
-                    cv2.drawContours(cp, [box], 0, (0, 0, 255))
-                    ut.show(Prova=cp)
-                    cv2.waitKey(0)'''
+'''
+DISEGNARE UN PUNTO PER CAPIRE CHE OGGETTO STIAMO CONISDERANDO
+y = cnt[i][0][0][0]
+#print(y)
+x = cnt[i][0][0][1]
+#print(x)
+f = frame[x,y]
+val = lap[x, y]
+valx = sobelx[x, y]
+valy = sobely[x, y]
 
-
+#print("-------")
+cv2.circle(lap, (y, x), 3, (0, 255, 0), -1)'''
