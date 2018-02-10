@@ -106,7 +106,6 @@ while run:
                                     cv2.circle(frame, (yj, xj), 2, (0, 255, 0), -1)
                                 #ut.show(Laplacian=lap)
                                 #cv2.waitKey(0)
-
                     #ut.show(Laplacian=lap)
                     #cv2.waitKey(0)
                     cv2.drawContours(cp, cnt[i], -1, (0, 0, 255), 1)
