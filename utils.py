@@ -9,8 +9,6 @@ dx = int(screen_width / 4)
 dy = int(screen_height / 2)
 label_bar_height = 70
 
-
-
 def show(wait=False, **kwargs):
 
     x = 0
@@ -37,7 +35,7 @@ def updating_background(c_mask, frame, bck, alpha):
     for row in range(width):
         for col in range(height):
             if c_mask[row, col] == 0:
-                p = alpha * frame[row, col]+ (1 - alpha) * bck[row, col]
+                p = alpha * frame[row, col] + (1 - alpha) * bck[row, col]
             else:
                 p = bck[row, col]
             bck_upd[row, col] = p
@@ -45,16 +43,9 @@ def updating_background(c_mask, frame, bck, alpha):
     return bck_upd
 
 
-def getforeground(self, frame, alpha):
 
-    self = frame * alpha + self * (1 - alpha)
-    dif = cv2.absdiff(self.astype(np.uint8), frame)
-    return dif
 
-def denoise(frame,n):
-    frame = cv2.medianBlur(frame, n)
-    frame = cv2.GaussianBlur(frame, (n, n), 0)
 
-    return frame
+
 
 
