@@ -4,7 +4,7 @@ import utils as ut
 
 camera = cv2.VideoCapture('video.avi')
 nFrame = 0
-T = 40
+T = 20
 med = 100
 
 ret, frame = camera.read()
@@ -13,6 +13,8 @@ if ret is True:
 else:
     run = False
 
+images_matrices = []
+
 while run:
     ret, frame = camera.read()
     if ret is True:
@@ -20,99 +22,30 @@ while run:
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         if nFrame < med:
-            if nFrame == 0:
-                prev = gray
-            s = cv2.add(gray.astype(np.int32), prev.astype(np.int32))
-            prev = s
-
+            img = np.asarray(gray)
+            images_matrices.append(img)
         else:
             if nFrame == med:
-                backgroundI = (s / med)
-                background = backgroundI
+                image_stack = np.concatenate([im[..., None] for im in images_matrices], axis=2)
+                background = np.median(image_stack, axis=2)
 
             foreground = cv2.absdiff(gray.astype(np.uint8), background.astype(np.uint8))
-            foreground = cv2.GaussianBlur(foreground, (7,7),-1)
-            foreground = cv2.medianBlur(foreground, 7)
-            imgMorphology = cv2.threshold(foreground.astype(np.uint8), T, 255, cv2.THRESH_BINARY)[1]
+            foreground = ut.denoise(foreground,7)
+            c_mask = cv2.threshold(foreground.astype(np.uint8), T, 255, cv2.THRESH_BINARY)[1]
 
-            # imgMorphology = cv2.medianBlur(imgMorphology, 17)
+            img_morphology = ut.morphology(c_mask)
 
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
-            imgMorphology = cv2.dilate(imgMorphology, kernel, iterations=1)
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 20))
-            imgMorphology = cv2.morphologyEx(imgMorphology, cv2.MORPH_CLOSE, kernel)
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            imgMorphology = cv2.morphologyEx(imgMorphology, cv2.MORPH_OPEN, kernel)
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-            imgMorphology = cv2.dilate(imgMorphology, kernel, iterations=1)
-
-            # Blob Analysis
-
-            params = cv2.SimpleBlobDetector_Params()
-
-            params.minThreshold = 0
-            params.maxThreshold = 256
-
-            params.filterByArea = True
-            params.minArea = 100
-            params.maxArea = imgMorphology.size * (2 / 4)
-
-            params.filterByCircularity = False
-            params.minCircularity = 0
-            params.maxCircularity = 1
-
-            params.filterByInertia = False
-            params.filterByConvexity = False
-            params.filterByColor = False
-
-            detector = cv2.SimpleBlobDetector_create(params)
-
-            # Detect blobs
-            rv = 255 - imgMorphology
-            kp = detector.detect(rv)
+            kp = ut.blob_analysis(img_morphology)
 
             imgBlob = cv2.drawKeypoints(gray, kp, np.array([]), (0, 0, 155), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-            # End Blob Analysis
 
-            # FindCount
-            background = ut.updating_background(imgMorphology, gray, background, 0.03)
+            background = ut.updating_background(img_morphology, gray, background, 0.2)
 
-            _, cnt, hierarchy= cv2.findContours(imgMorphology, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+            _, cnt, hierarchy= cv2.findContours(img_morphology, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+            cv2.drawContours(cp, cnt, -1, (0, 0, 255), 1)
 
-
-            lap = cv2.Laplacian(frame, cv2.CV_64F)
-            sobelx = cv2.Sobel(frame, cv2.CV_64F, 1, 0, ksize=3)
-            sobely = cv2.Sobel(frame, cv2.CV_64F, 0, 1, ksize=3)
-            for i in range(len(cnt)):
-                #if nFrame > 498:
-                    # cnt[0][0][0][0] è 256 e cnt[0][0][0][1] è 40
-                    size = len(cnt[i])
-                    for j in range(len(cnt[i])):
-                        yj = cnt[i][j][0][0]
-                        xj = cnt[i][j][0][1]
-                        v = lap[xj, yj][0]
-                        if j == 0:
-                            sG = lap[xj, yj][0]
-                        else:
-                            sG += lap[xj, yj][0]
-                    mG = round(abs(sG/len(cnt[i])))
-                    perimeter = round(cv2.arcLength(cnt[i], True))
-                    if mG <=1:
-                        if perimeter > 90:
-                            if perimeter < 115:
-                                for j in range(len(cnt[i])):
-                                    yj = cnt[i][j][0][0]
-                                    xj = cnt[i][j][0][1]
-                                    cv2.circle(frame, (yj, xj), 2, (0, 255, 0), -1)
-                                #ut.show(Laplacian=lap)
-                                #cv2.waitKey(0)
-                    #ut.show(Laplacian=lap)
-                    #cv2.waitKey(0)
-                    cv2.drawContours(cp, cnt[i], -1, (0, 0, 255), 1)
-            # color = np.random.randint(0, 255, (3)).tolist()
-
-            ut.show(Morpholgy=imgMorphology, Contourns=frame, Blob= imgBlob)
-            cv2.waitKey(10)
+            ut.show(Morpholgy=img_morphology, Contourns=frame)
+            cv2.waitKey(1)
             print(nFrame)
 
         nFrame += 1
