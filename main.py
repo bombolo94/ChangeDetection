@@ -49,6 +49,8 @@ while run:
 
             cv2.drawContours(cp, cnt, -1, (0, 0, 255), 1)
 
+            ut.detect_false_object(cnt, gray,cp)
+
             ut.show(Morpholgy=img_morphology, Contourns=cp)
             cv2.waitKey(100)
             print(nFrame)

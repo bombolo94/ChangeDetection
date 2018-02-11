@@ -69,46 +69,38 @@ def morphology(mask):
     img_morphology = cv2.dilate(mask, kernel, iterations=1)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (12, 12))
     img_morphology = cv2.morphologyEx(img_morphology, cv2.MORPH_CLOSE, kernel)
-    #kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
-    #img_morphology = cv2.morphologyEx(img_morphology, cv2.MORPH_OPEN, kernel)
-    #kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    #img_morphology = cv2.dilate(img_morphology, kernel, iterations=1)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+    img_morphology = cv2.morphologyEx(img_morphology, cv2.MORPH_OPEN, kernel)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    img_morphology = cv2.dilate(img_morphology, kernel, iterations=1)
 
     return img_morphology
 
-def detect_false_object(cnt, frame):
+def detect_false_object(cnt, frame,cp):
     lap = cv2.Laplacian(frame, cv2.CV_64F)
     for i in range(len(cnt)):
         y = cnt[i][0][0][0]
         x = cnt[i][0][0][1]
         cv2.circle(lap, (y, x), 3, (0, 255, 0), -1)
-        show(Laplacian=lap)
-        cv2.waitKey(0)
-        # if nFrame > 498:
-        # cnt[0][0][0][0] è 256 e cnt[0][0][0][1] è 40
         size = len(cnt[i])
         for j in range(len(cnt[i])):
             yj = cnt[i][j][0][0]
             xj = cnt[i][j][0][1]
-            v = lap[xj, yj][0]
+            #v = lap[xj, yj]
             if j == 0:
-                sG = abs(lap[xj, yj][0])
+                #sG = abs(lap[xj, yj][0])
+                sG = abs(lap[xj, yj])
             else:
-                sG += abs(lap[xj, yj][0])
+                #sG += abs(lap[xj, yj][0])
+                sG += abs(lap[xj, yj])
         mG = round(sG / len(cnt[i]))
         perimeter = round(cv2.arcLength(cnt[i], True))
-        '''if mG <= 1:
-            if perimeter > 90:
-                if perimeter < 115:
-                    for j in range(len(cnt[i])):
-                        yj = cnt[i][j][0][0]
-                        xj = cnt[i][j][0][1]
-                        cv2.circle(frame, (yj, xj), 2, (0, 255, 0), -1)
-                    # ut.show(Laplacian=lap)
-                    # cv2.waitKey(0)'''
-        # ut.show(Laplacian=lap)
-        # cv2.waitKey(0)
-        #cv2.drawContours(cp, cnt[i], -1, (0, 0, 255), 1)
+        if mG >= 6 and mG<=11 and perimeter>95 and perimeter<110:
+            for j in range(len(cnt[i])):
+                yj = cnt[i][j][0][0]
+                xj = cnt[i][j][0][1]
+                cv2.circle(cp, (yj, xj), 2, (0, 255, 0), -1)
+
 
 
 
