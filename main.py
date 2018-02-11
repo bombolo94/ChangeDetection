@@ -48,9 +48,7 @@ while run:
             _, cnt, hierarchy= cv2.findContours(img_morphology, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
             cv2.drawContours(cp, cnt, -1, (0, 0, 255), 1)
-
             ut.detect_false_object(cnt, gray,cp)
-
             ut.show(Morpholgy=img_morphology, Contourns=cp)
             cv2.waitKey(100)
             print(nFrame)
