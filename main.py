@@ -39,13 +39,18 @@ while run:
 
             imgBlob = cv2.drawKeypoints(gray, kp, np.array([]), (0, 0, 155), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
-            background = ut.updating_background(img_morphology, gray, background, 0.2)
+            rev = img_morphology/255
+
+            rev = 1-rev
+
+            background = ut.updating_background(rev, gray, background, 0.2)
 
             _, cnt, hierarchy= cv2.findContours(img_morphology, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+
             cv2.drawContours(cp, cnt, -1, (0, 0, 255), 1)
 
-            ut.show(Morpholgy=img_morphology, Contourns=frame)
-            cv2.waitKey(1)
+            ut.show(Morpholgy=img_morphology, Contourns=cp)
+            cv2.waitKey(100)
             print(nFrame)
 
         nFrame += 1

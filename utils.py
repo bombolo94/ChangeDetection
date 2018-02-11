@@ -29,17 +29,7 @@ def show(wait=False, **kwargs):
 
 
 def updating_background(c_mask, frame, bck, alpha):
-
-    width, height = frame.shape[:2]
-    bck_upd = bck.copy()
-    for row in range(width):
-        for col in range(height):
-            if c_mask[row, col] == 0:
-                p = alpha * frame[row, col] + (1 - alpha) * bck[row, col]
-            else:
-                p = bck[row, col]
-            bck_upd[row, col] = p
-
+    bck_upd = (alpha*frame + (1-alpha)*bck)*c_mask + bck*(1-c_mask)
     return bck_upd
 
 
@@ -75,20 +65,25 @@ def blob_analysis(img_morphology):
     return kp
 
 def morphology(mask):
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
     img_morphology = cv2.dilate(mask, kernel, iterations=1)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (12, 12))
     img_morphology = cv2.morphologyEx(img_morphology, cv2.MORPH_CLOSE, kernel)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    img_morphology = cv2.morphologyEx(img_morphology, cv2.MORPH_OPEN, kernel)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-    img_morphology = cv2.dilate(img_morphology, kernel, iterations=1)
+    #kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+    #img_morphology = cv2.morphologyEx(img_morphology, cv2.MORPH_OPEN, kernel)
+    #kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    #img_morphology = cv2.dilate(img_morphology, kernel, iterations=1)
 
     return img_morphology
 
 def detect_false_object(cnt, frame):
     lap = cv2.Laplacian(frame, cv2.CV_64F)
     for i in range(len(cnt)):
+        y = cnt[i][0][0][0]
+        x = cnt[i][0][0][1]
+        cv2.circle(lap, (y, x), 3, (0, 255, 0), -1)
+        show(Laplacian=lap)
+        cv2.waitKey(0)
         # if nFrame > 498:
         # cnt[0][0][0][0] è 256 e cnt[0][0][0][1] è 40
         size = len(cnt[i])
@@ -102,7 +97,7 @@ def detect_false_object(cnt, frame):
                 sG += abs(lap[xj, yj][0])
         mG = round(sG / len(cnt[i]))
         perimeter = round(cv2.arcLength(cnt[i], True))
-        if mG <= 1:
+        '''if mG <= 1:
             if perimeter > 90:
                 if perimeter < 115:
                     for j in range(len(cnt[i])):
@@ -110,7 +105,7 @@ def detect_false_object(cnt, frame):
                         xj = cnt[i][j][0][1]
                         cv2.circle(frame, (yj, xj), 2, (0, 255, 0), -1)
                     # ut.show(Laplacian=lap)
-                    # cv2.waitKey(0)
+                    # cv2.waitKey(0)'''
         # ut.show(Laplacian=lap)
         # cv2.waitKey(0)
         #cv2.drawContours(cp, cnt[i], -1, (0, 0, 255), 1)
