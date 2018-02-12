@@ -4,8 +4,8 @@ import utils as ut
 
 camera = cv2.VideoCapture('video.avi')
 nFrame = 0
-T = 20
-med = 100
+threshold = 20
+value = 100
 
 ret, frame = camera.read()
 if ret is True:
@@ -18,26 +18,27 @@ images_matrices = []
 while run:
     ret, frame = camera.read()
     if ret is True:
-        cp = frame
+
+        img_contour = frame.copy()
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        if nFrame < med:
+        if nFrame < value:
             img = np.asarray(gray)
             images_matrices.append(img)
         else:
-            if nFrame == med:
+            if nFrame == value:
                 image_stack = np.concatenate([im[..., None] for im in images_matrices], axis=2)
                 background = np.median(image_stack, axis=2)
 
             foreground = cv2.absdiff(gray.astype(np.uint8), background.astype(np.uint8))
             foreground = ut.denoise(foreground,7)
-            c_mask = cv2.threshold(foreground.astype(np.uint8), T, 255, cv2.THRESH_BINARY)[1]
+            c_mask = cv2.threshold(foreground.astype(np.uint8), threshold, 255, cv2.THRESH_BINARY)[1]
 
             img_morphology = ut.morphology(c_mask)
 
             kp = ut.blob_analysis(img_morphology)
 
-            imgBlob = cv2.drawKeypoints(gray, kp, np.array([]), (0, 0, 155), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+            imgBlob = cv2.drawKeypoints(gray, kp, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
             rev = img_morphology/255
 
@@ -46,10 +47,9 @@ while run:
             background = ut.updating_background(rev, gray, background, 0.2)
 
             _, cnt, hierarchy= cv2.findContours(img_morphology, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-
-            cv2.drawContours(cp, cnt, -1, (0, 0, 255), 1)
-            ut.detect_false_object(cnt, gray,cp)
-            ut.show(Morpholgy=img_morphology, Contourns=cp)
+            cv2.drawContours(img_contour, cnt, -1, (255, 0, 0), 1)
+            ut.detect_false_object(cnt, frame, img_contour, threshold)
+            ut.show(Morpholgy=img_morphology, Contours=img_contour, Frame= frame)
             cv2.waitKey(100)
             print(nFrame)
 
