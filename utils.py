@@ -77,18 +77,42 @@ def morphology(mask):
     return img_morphology
 
 
-def define_contour(contours, img_contour):
+def define_contour(nFrame,contours, img_contour):
+    out_file = open("output.txt", "a")
+    size = len(contours)
 
-    for cnt in range(len(contours)):
+    object_detected = 0;
+    for cnt in range(size):
+        area = round(cv2.contourArea(contours[cnt]))
         perimeter = round(cv2.arcLength(contours[cnt], True))
-        if perimeter > 80:
-            if perimeter >= 300:
-                cv2.drawContours(img_contour, contours[cnt], -1, (0, 128, 0), 2)
-            elif 125< perimeter <=130:
-                cv2.drawContours(img_contour, contours[cnt], -1, (255, 0, 255), 2)
-            elif perimeter < 95:
-                cv2.drawContours(img_contour, contours[cnt], -1, (255, 0, 0), 2)
+        classification = " "
+
+        if 540 < area < 575:
+            cv2.drawContours(img_contour, contours[cnt], -1, (255, 0, 0), 2)
+            classification += "other"
+            object_detected +=1
+            out_file.write("Object Id: " + str(cnt + 1) + " | Area: " + str(area) + " | Perimeter: " + str(perimeter) +
+                           " | Classification:" + classification + "\n")
+        elif (610 <= area < 690)  or ( 700<area <= 715):
+            cv2.drawContours(img_contour, contours[cnt], -1, (255, 0, 255), 2)
+            classification += "other"
+            object_detected += 1
+            out_file.write("Object Id: " + str(cnt + 1) + " | Area: " + str(area) + " | Perimeter: " + str(perimeter) +
+                           " | Classification:" + classification + "\n")
+        elif 4000 < area < 13500:
+            cv2.drawContours(img_contour, contours[cnt], -1, (0, 128, 0), 2)
+            classification += "person"
+            object_detected += 1
+            out_file.write("Object Id: " + str(cnt + 1) + " | Area: " + str(area) + " | Perimeter: " + str(perimeter) +
+                           " | Classification:" + classification + "\n")
+
+    out_file.write("Frame index: " + str(nFrame) + " | Object Detected: " + str(object_detected) + "\n")
+    out_file.write("--------------------------------------------------------------\n")
+
+    out_file.close()
     return img_contour
+
+
 def detect_false_object(contours, frame, img_contour, threshold):
 
     img_edge_detection_lap = cv2.Laplacian(frame, cv2.CV_64F)
@@ -106,9 +130,8 @@ def detect_false_object(contours, frame, img_contour, threshold):
                 sum_contour += abs_edge_lap[x, y][0].astype(np.int)
         mean_contour = round(sum_contour / size)
 
-        perimeter = round(cv2.arcLength(contours[cnt], True))
-
-        if mean_contour < threshold  and 88 < perimeter < 90:
+        area = round(cv2.contourArea(contours[cnt]))
+        if mean_contour and 540 < area < 575:
             for j in range(len(contours[cnt])):
                 y = contours[cnt][j][0][0]
                 x = contours[cnt][j][0][1]

@@ -47,13 +47,12 @@ while run:
             background = ut.updating_background(rev, gray, background, 0.1)
 
             _, cnt, hierarchy= cv2.findContours(img_morphology, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-            #cv2.drawContours(img_contour, cnt, -1, (255, 0, 0), 1)
-            if nFrame>=268:
-                img_contour = ut.define_contour(cnt, img_contour)
+
+            img_contour = ut.define_contour(nFrame,cnt, img_contour)
 
             ut.detect_false_object(cnt, frame, img_contour, threshold)
             ut.show(Morpholgy=img_morphology, Contours=img_contour, Frame= frame)
-            cv2.waitKey(0)
+            cv2.waitKey(100)
             print(nFrame)
 
         nFrame += 1
