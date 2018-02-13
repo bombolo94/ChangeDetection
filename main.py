@@ -44,13 +44,16 @@ while run:
 
             rev = 1-rev
 
-            background = ut.updating_background(rev, gray, background, 0.2)
+            background = ut.updating_background(rev, gray, background, 0.1)
 
-            _, cnt, hierarchy= cv2.findContours(img_morphology, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-            cv2.drawContours(img_contour, cnt, -1, (255, 0, 0), 1)
+            _, cnt, hierarchy= cv2.findContours(img_morphology, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            #cv2.drawContours(img_contour, cnt, -1, (255, 0, 0), 1)
+            if nFrame>=268:
+                img_contour = ut.define_contour(cnt, img_contour)
+
             ut.detect_false_object(cnt, frame, img_contour, threshold)
             ut.show(Morpholgy=img_morphology, Contours=img_contour, Frame= frame)
-            cv2.waitKey(100)
+            cv2.waitKey(0)
             print(nFrame)
 
         nFrame += 1
@@ -60,16 +63,3 @@ while run:
 camera.release()
 cv2.destroyAllWindows()
 
-'''
-DISEGNARE UN PUNTO PER CAPIRE CHE OGGETTO STIAMO CONISDERANDO
-y = cnt[i][0][0][0]
-#print(y)
-x = cnt[i][0][0][1]
-#print(x)
-f = frame[x,y]
-val = lap[x, y]
-valx = sobelx[x, y]
-valy = sobely[x, y]
-
-#print("-------")
-cv2.circle(lap, (y, x), 3, (0, 255, 0), -1)'''

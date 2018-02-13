@@ -5,7 +5,7 @@ import numpy as np
 
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
-dx = int(screen_width / 4)
+dx = int(screen_width / 3)
 dy = int(screen_height / 2)
 label_bar_height = 70
 
@@ -77,39 +77,38 @@ def morphology(mask):
     return img_morphology
 
 
+def define_contour(contours, img_contour):
+
+    for cnt in range(len(contours)):
+        perimeter = round(cv2.arcLength(contours[cnt], True))
+        if perimeter > 80:
+            if perimeter >= 300:
+                cv2.drawContours(img_contour, contours[cnt], -1, (0, 128, 0), 2)
+            elif 125< perimeter <=130:
+                cv2.drawContours(img_contour, contours[cnt], -1, (255, 0, 255), 2)
+            elif perimeter < 95:
+                cv2.drawContours(img_contour, contours[cnt], -1, (255, 0, 0), 2)
+    return img_contour
 def detect_false_object(contours, frame, img_contour, threshold):
 
     img_edge_detection_lap = cv2.Laplacian(frame, cv2.CV_64F)
     abs_edge_lap = np.uint8(np.absolute(img_edge_detection_lap))
-    #sobelx = cv2.Sobel(frame, cv2.CV_64F, 1, 0, ksize=1)
-    #sobely = cv2.Sobel(frame, cv2.CV_64F, 0, 1, ksize=1)
+
     for cnt in range(len(contours)):
-        '''y = cnt[cnt][0][0][0]
-        x = cnt[cnt][0][0][1]
-        cv2.circle(img_edge_detection_lap, (y, x), 3, (255, 0, 0), -1)'''
         size = len(contours[cnt])
         for j in range(len(contours[cnt])):
             # coordinates of contours
             y = contours[cnt][j][0][0]
             x = contours[cnt][j][0][1]
             if j == 0:
-                summ_contour = abs_edge_lap[x, y][0].astype(np.int)
-                #sGx = abs(sobelx[x, y][0])
-                #sGy = abs(sobely[x, y][0])
+                sum_contour = abs_edge_lap[x, y][0].astype(np.int)
             else:
-                summ_contour += abs_edge_lap[x, y][0].astype(np.int)
-                #sGx += abs(sobelx[x, y][0])
-                #sGy += abs(sobely[x, y][0])
-        #how(ImmagineAnalizzata=abs_edge_lap, Frame=frame, Cerchio=img_edge_detection_lap)
-        #cv2.waitKey(0)
-        mean_contour = round(summ_contour / size)
-        #mGx = round(sGx / len(cnt[cnt]))
-        #mGy = round(sGy / len(cnt[cnt]))
-        #print(mGx)
-        #print(mGy)
+                sum_contour += abs_edge_lap[x, y][0].astype(np.int)
+        mean_contour = round(sum_contour / size)
+
         perimeter = round(cv2.arcLength(contours[cnt], True))
 
-        if mean_contour <= threshold and 88 < perimeter <= 90:
+        if mean_contour < threshold  and 88 < perimeter < 90:
             for j in range(len(contours[cnt])):
                 y = contours[cnt][j][0][0]
                 x = contours[cnt][j][0][1]
