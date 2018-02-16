@@ -3,6 +3,7 @@ import tkinter as tk
 root = tk.Tk()
 import numpy as np
 
+
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 dx = int(screen_width / 3)
@@ -79,30 +80,32 @@ def morphology(mask):
     return img_morphology
 
 
-def define_contour(n_frame, contours, img_contour):
+def define_contour(n_frame, contours,hierarchy, img_contour):
 
     out_file = open(file_output, "a")
     size = len(contours)
 
-    object_detected = 0;
+    object_detected = 0
+
     for cnt in range(size):
         area = round(cv2.contourArea(contours[cnt]))
         perimeter = round(cv2.arcLength(contours[cnt], True))
         classification = " "
 
-        if 540 < area < 575:
+        if 540 < area < 590:
             cv2.drawContours(img_contour, contours[cnt], -1, (255, 0, 0), 2)
             classification += "other"
             object_detected += 1
             out_file.write("Object Id: " + str(object_detected) + " | Area: " + str(area) + " | Perimeter: " + str(perimeter) +
                            " | Classification:" + classification + "\n")
-        elif (580 < area < 609)  or (610 <= area < 690)  or (700 <= area <= 730):
+        elif 600 < area <= 730:
             cv2.drawContours(img_contour, contours[cnt], -1, (255, 0, 255), 2)
             classification += "other"
             object_detected += 1
             out_file.write("Object Id: " + str(object_detected) + " | Area: " + str(area) + " | Perimeter: " + str(perimeter) +
                            " | Classification:" + classification + "\n")
-        elif 4000 < area < 14000:
+        elif 7000 < area < 18000:
+
             cv2.drawContours(img_contour, contours[cnt], -1, (0, 128, 0), 2)
             classification += "person"
             object_detected += 1
@@ -116,31 +119,64 @@ def define_contour(n_frame, contours, img_contour):
     return img_contour
 
 
-def detect_false_object(contours, frame, img_contour, threshold):
+def d_f_o(contours, frame, background, img_contour, threshold):
+
+    # Canny mi da un valore asosluo alto dove ci sono i contorni
+    background_canny = np.uint8(np.absolute(cv2.Canny(background, 100, 200)))
+    frame_canny = np.absolute(cv2.Canny(frame, 100,200))
+
+    for cnt in range(len(contours)):
+        area = round(cv2.contourArea(contours[cnt]))
+        if not(4000 < area < 14000):
+            size = len(contours[cnt])
+            for j in range(size):
+                y = contours[cnt][j][0][0]
+                x = contours[cnt][j][0][1]
+                if j == 0:
+                    sum_contour_background = background_canny[x, y].astype(np.int)
+                    sum_contour_frame = frame_canny[x, y].astype(np.int)
+                else:
+                    sum_contour_background += background_canny[x, y].astype(np.int)
+                    sum_contour_frame += frame_canny[x, y].astype(np.int)
+            mean_contour_background = round(sum_contour_background / size)
+            mean_contour_frame = round(sum_contour_frame / size)
+            dif = mean_contour_background - mean_contour_frame
+
+            if mean_contour_frame < mean_contour_background and mean_contour_frame <= threshold:
+
+                for j in range(len(contours[cnt])):
+                    y = contours[cnt][j][0][0]
+                    x = contours[cnt][j][0][1]
+                    cv2.circle(img_contour, (y, x), 1, (0, 0, 255), -1)
+
+# non va molto bene perchè se non c'è un area uniforme allora sono fottuto
+'''def detect_false_object(contours, frame, img_contour, threshold):
 
     img_edge_detection_lap = cv2.Laplacian(frame, cv2.CV_64F)
     abs_edge_lap = np.uint8(np.absolute(img_edge_detection_lap))
 
     for cnt in range(len(contours)):
         size = len(contours[cnt])
-        for j in range(len(contours[cnt])):
-            # coordinates of contours
-            y = contours[cnt][j][0][0]
-            x = contours[cnt][j][0][1]
-            if j == 0:
-                sum_contour = abs_edge_lap[x, y][0].astype(np.int)
-            else:
-                sum_contour += abs_edge_lap[x, y][0].astype(np.int)
-        mean_contour = round(sum_contour / size)
-
-        perimeter = round(cv2.arcLength(contours[cnt], True))
-
-        if mean_contour <= threshold  and 80 < perimeter < 100:
-
-            for j in range(len(contours[cnt])):
+        #perimeter = round(cv2.arcLength(contours[cnt], True))
+        #if 80 < perimeter < 300:
+        area = round(cv2.contourArea(contours[cnt]))
+        if 400 < area < 1400:
+            for j in range(size):
+                # coordinates of contours
                 y = contours[cnt][j][0][0]
                 x = contours[cnt][j][0][1]
-                cv2.circle(img_contour, (y, x), 1, (0, 0, 255), -1)
+                if j == 0:
+                    sum_contour = abs_edge_lap[x, y][0].astype(np.int)
+                else:
+                    sum_contour += abs_edge_lap[x, y][0].astype(np.int)
+            mean_contour = round(sum_contour / size)
+
+            if mean_contour <= threshold :
+
+                for j in range(len(contours[cnt])):
+                    y = contours[cnt][j][0][0]
+                    x = contours[cnt][j][0][1]
+                    cv2.circle(img_contour, (y, x), 1, (0, 0, 255), -1)'''
 
 
 

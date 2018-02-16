@@ -5,6 +5,7 @@ import utils as ut
 camera = cv2.VideoCapture('video.avi')
 nFrame = 0
 threshold = 20
+
 value = 100
 
 ret, frame = camera.read()
@@ -36,24 +37,24 @@ while run:
 
             img_morphology = ut.morphology(c_mask)
 
-            kp = ut.blob_analysis(img_morphology)
-
-            imgBlob = cv2.drawKeypoints(gray, kp, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+            # kp = ut.blob_analysis(img_morphology)
+            # imgBlob = cv2.drawKeypoints(gray, kp, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
             rev = img_morphology/255
-
             rev = 1-rev
 
             background = ut.updating_background(rev, gray, background, 0.1)
 
-            _, cnt, hierarchy= cv2.findContours(img_morphology, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            _, contours, hierarchy = cv2.findContours(img_morphology, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-            #if nFrame>= 239:
-            img_contour = ut.define_contour(nFrame,cnt, img_contour)
+            img_contour = ut.define_contour(nFrame,contours, hierarchy, img_contour)
 
-            ut.detect_false_object(cnt, frame, img_contour, threshold)
-            ut.show(Morpholgy=img_morphology, Contours=img_contour, Frame= frame, Foreground=foreground)
-            cv2.waitKey(0)
+            ut.d_f_o(contours, frame, background.astype(np.uint8), img_contour, threshold)
+
+            ut.show(Morpholgy=img_morphology, Contours=img_contour, Frame= frame)
+
+            cv2.waitKey(70)
+
             print(nFrame)
 
         nFrame += 1
