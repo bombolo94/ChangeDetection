@@ -49,7 +49,7 @@ while run:
 
             img_contour = ut.define_contour(nFrame,contours, hierarchy, img_contour)
 
-            ut.d_f_o(contours, frame, background.astype(np.uint8), img_contour, threshold)
+            ut.d_f_o(contours, gray, background.astype(np.uint8), img_contour, threshold)
 
             ut.show(Morpholgy=img_morphology, Contours=img_contour, Frame= frame)
 

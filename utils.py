@@ -6,7 +6,7 @@ import numpy as np
 
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
-dx = int(screen_width / 3)
+dx = int(screen_width / 4)
 dy = int(screen_height / 2)
 label_bar_height = 70
 
@@ -119,11 +119,12 @@ def define_contour(n_frame, contours,hierarchy, img_contour):
     return img_contour
 
 
-def d_f_o(contours, frame, background, img_contour, threshold):
+def d_f_o(contours, gray, background, img_contour, threshold):
 
     # Canny mi da un valore asosluo alto dove ci sono i contorni
-    background_canny = np.uint8(np.absolute(cv2.Canny(background, 100, 200)))
-    frame_canny = np.absolute(cv2.Canny(frame, 100,200))
+
+    img_edge_detection_lap = np.uint8(np.absolute(cv2.Laplacian(gray, cv2.CV_16S, None, 3)))
+    background_lap = np.uint8(np.absolute(cv2.Laplacian(background, cv2.CV_16S, None, 3)))
 
     for cnt in range(len(contours)):
         area = round(cv2.contourArea(contours[cnt]))
@@ -133,16 +134,16 @@ def d_f_o(contours, frame, background, img_contour, threshold):
                 y = contours[cnt][j][0][0]
                 x = contours[cnt][j][0][1]
                 if j == 0:
-                    sum_contour_background = background_canny[x, y].astype(np.int)
-                    sum_contour_frame = frame_canny[x, y].astype(np.int)
+                    sum_contour_background = background_lap[x, y].astype(np.int)
+                    sum_contour_gray = img_edge_detection_lap[x, y].astype(np.int)
                 else:
-                    sum_contour_background += background_canny[x, y].astype(np.int)
-                    sum_contour_frame += frame_canny[x, y].astype(np.int)
-            mean_contour_background = round(sum_contour_background / size)
-            mean_contour_frame = round(sum_contour_frame / size)
-            dif = mean_contour_background - mean_contour_frame
+                    sum_contour_background += background_lap[x, y].astype(np.int)
+                    sum_contour_gray += img_edge_detection_lap[x, y].astype(np.int)
 
-            if mean_contour_frame < mean_contour_background and mean_contour_frame <= threshold:
+            mean_contour_gray = round(sum_contour_gray / size)
+            mean_contour_background = round(sum_contour_background / size)
+
+            if mean_contour_gray < mean_contour_background:
 
                 for j in range(len(contours[cnt])):
                     y = contours[cnt][j][0][0]
