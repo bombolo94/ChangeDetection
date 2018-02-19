@@ -16,6 +16,7 @@ else:
 
 images_matrices = []
 
+
 while run:
     ret, frame = camera.read()
     if ret is True:
@@ -28,11 +29,14 @@ while run:
             images_matrices.append(img)
         else:
             if nFrame == value:
+
                 image_stack = np.concatenate([im[..., None] for im in images_matrices], axis=2)
-                background = np.median(image_stack, axis=2)
+                backgroundI = np.median(image_stack, axis=2)
+                background = backgroundI.copy()
 
             foreground = cv2.absdiff(gray.astype(np.uint8), background.astype(np.uint8))
-            foreground = ut.denoise(foreground,7)
+            foreground = ut.denoise(foreground, 7)
+
             c_mask = cv2.threshold(foreground.astype(np.uint8), threshold, 255, cv2.THRESH_BINARY)[1]
 
             img_morphology = ut.morphology(c_mask)
@@ -47,13 +51,13 @@ while run:
 
             _, contours, hierarchy = cv2.findContours(img_morphology, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-            img_contour = ut.define_contour(nFrame,contours, hierarchy, img_contour)
+            img_contour = ut.define_contour(nFrame, contours, img_contour)
 
-            ut.d_f_o(contours, gray, background.astype(np.uint8), img_contour, threshold)
+            ut.detect_false_object(contours, gray, backgroundI.astype(np.uint8), img_contour, threshold)
 
-            ut.show(Morpholgy=img_morphology, Contours=img_contour, Frame= frame)
+            ut.show(Morpholgy=img_morphology, Contours=img_contour)
 
-            cv2.waitKey(70)
+            cv2.waitKey(100)
 
             print(nFrame)
 
