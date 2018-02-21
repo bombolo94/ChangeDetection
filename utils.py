@@ -1,9 +1,8 @@
 import cv2
 import tkinter as tk
-root = tk.Tk()
 import numpy as np
 
-
+root = tk.Tk()
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 dx = int(screen_width / 2)
@@ -41,32 +40,6 @@ def denoise(img, n):
     img = cv2.GaussianBlur(img, (n, n), -1)
     img = cv2.medianBlur(img, n)
     return img
-
-
-def blob_analysis(img_morphology):
-    params = cv2.SimpleBlobDetector_Params()
-    params.minThreshold = 0
-    params.maxThreshold = 256
-
-    params.filterByArea = True
-    params.minArea = 100
-    params.maxArea = img_morphology.size * (2 / 4)
-
-    params.filterByCircularity = False
-    params.minCircularity = 0
-    params.maxCircularity = 1
-
-    params.filterByInertia = False
-    params.filterByConvexity = False
-    params.filterByColor = False
-
-    detector = cv2.SimpleBlobDetector_create(params)
-
-    # Detect blobs
-    rv = 255 - img_morphology
-    kp = detector.detect(rv)
-    return kp
-
 
 
 def morphology(mask):
@@ -120,10 +93,13 @@ def define_contour(n_frame, contours, img_contour):
     return img_contour
 
 
-def detect_false_object(contours, gray, background, img_contour, threshold):
+def detect_false_object(contours, gray, background, img_contour):
 
-    img_edge_detection_lap = np.uint8(np.absolute(cv2.Laplacian(gray, cv2.CV_16S, None, 3)))
-    background_lap = np.uint8(np.absolute(cv2.Laplacian(background, cv2.CV_16S, None, 3)))
+    sb_x_gray = np.absolute(cv2.Sobel(gray, cv2.CV_64F, 1, 0, 3))
+    sb_x_background = np.absolute(cv2.Sobel(background, cv2.CV_64F, 1, 0, 3))
+
+    sb_y_gray = np.absolute(cv2.Sobel(gray, cv2.CV_64F, 0, 1, 3))
+    sb_y_background = np.absolute(cv2.Sobel(background, cv2.CV_64F, 0, 1, 3))
 
     for cnt in range(len(contours)):
         area = round(cv2.contourArea(contours[cnt]))
@@ -133,19 +109,28 @@ def detect_false_object(contours, gray, background, img_contour, threshold):
                 y = contours[cnt][j][0][0]
                 x = contours[cnt][j][0][1]
                 if j == 0:
-                    sum_contour_background = background_lap[x, y].astype(np.int)
-                    sum_contour_gray = img_edge_detection_lap[x, y].astype(np.int)
+
+                    sum_sb_x_gray = sb_x_gray[x,y].astype(np.int)
+                    sum_sb_x_back = sb_x_background[x, y].astype(np.int)
+
+                    sum_sb_y_gray = sb_y_gray[x, y].astype(np.int)
+                    sum_sb_y_back = sb_y_background[x, y].astype(np.int)
+
                 else:
-                    sum_contour_background += background_lap[x, y].astype(np.int)
-                    sum_contour_gray += img_edge_detection_lap[x, y].astype(np.int)
-            # un valore (assoluto) alto nel laplaciano vuol dire che c'è un bordo
-            # quindi se il valore ottenuo nel frame corrente è minore rispetto a quello che c'era nel background
-            # vuol dire che un oggetto è stato rimosso dal background,
-            mean_contour_gray = round(sum_contour_gray / size)
-            mean_contour_background = round(sum_contour_background / size)
 
-            if mean_contour_gray < mean_contour_background:
+                    sum_sb_x_gray += sb_x_gray[x, y].astype(np.int)
+                    sum_sb_x_back += sb_x_background[x, y].astype(np.int)
 
+                    sum_sb_y_gray += sb_y_gray[x, y].astype(np.int)
+                    sum_sb_y_back += sb_y_background[x, y].astype(np.int)
+
+            mean_x_gray = round(sum_sb_x_gray/size)
+            mean_y_gray = round(sum_sb_y_gray / size)
+
+            mean_x_back = round(sum_sb_x_back / size)
+            mean_y_back = round(sum_sb_y_back / size)
+
+            if mean_x_gray < mean_x_back and mean_y_gray < mean_y_back:
                 for j in range(len(contours[cnt])):
                     y = contours[cnt][j][0][0]
                     x = contours[cnt][j][0][1]

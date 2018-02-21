@@ -41,9 +41,6 @@ while run:
 
             img_morphology = ut.morphology(c_mask)
 
-            # kp = ut.blob_analysis(img_morphology)
-            # imgBlob = cv2.drawKeypoints(gray, kp, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-
             rev = img_morphology/255
             rev = 1-rev
 
@@ -53,11 +50,11 @@ while run:
 
             img_contour = ut.define_contour(nFrame, contours, img_contour)
 
-            ut.detect_false_object(contours, gray, backgroundI.astype(np.uint8), img_contour, threshold)
+            ut.detect_false_object(contours, gray, backgroundI.astype(np.uint8), img_contour)
 
-            ut.show(Morpholgy=img_morphology, Contours=img_contour)
+            ut.show(Contours=img_contour, Morphology=img_morphology)
 
-            cv2.waitKey(100)
+            cv2.waitKey(50)
 
             print(nFrame)
 
