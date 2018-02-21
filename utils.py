@@ -9,7 +9,7 @@ dx = int(screen_width / 2)
 dy = int(screen_height / 2)
 label_bar_height = 70
 
-file_output = "output.txt"
+file_output = "outpuFt.txt"
 
 
 def show(wait=False, **kwargs):
@@ -37,7 +37,7 @@ def updating_background(c_mask, frame, bck, alpha):
 
 
 def denoise(img, n):
-    img = cv2.GaussianBlur(img, (n, n), -1)
+    img = cv2.GaussianBlur(img, (n, n), 1)
     img = cv2.medianBlur(img, n)
     return img
 
@@ -66,25 +66,24 @@ def define_contour(n_frame, contours, img_contour):
         perimeter = round(cv2.arcLength(contours[cnt], True))
         classification = " "
 
-        if 540 < area < 590:
-            cv2.drawContours(img_contour, contours[cnt], -1, (255, 0, 0), 2)
-            classification += "other"
-            object_detected += 1
-            out_file.write("Object Id: " + str(object_detected) + " | Area: " + str(area) + " | Perimeter: " + str(perimeter) +
-                           " | Classification:" + classification + "\n")
-        elif 610 < area < 690 or 700 < area <= 730:
-            cv2.drawContours(img_contour, contours[cnt], -1, (255, 0, 255), 2)
-            classification += "other"
-            object_detected += 1
-            out_file.write("Object Id: " + str(object_detected) + " | Area: " + str(area) + " | Perimeter: " + str(perimeter) +
-                           " | Classification:" + classification + "\n")
-        elif 7000 < area < 18000:
-
+        if 400 < perimeter < 800:
             cv2.drawContours(img_contour, contours[cnt], -1, (0, 128, 0), 2)
             classification += "person"
             object_detected += 1
-            out_file.write("Object Id: " + str(object_detected) + " | Area: " + str(area) + " | Perimeter: " + str(perimeter) +
-                           " | Classification:" + classification + "\n")
+            out_file.write("Object Id: " + str(object_detected) + " | Area: " + str(area) + " | Perimeter: " +
+                           str(perimeter) + " | Classification:" + classification + "\n")
+        elif 120 <= perimeter < 130 and area < 680:
+            cv2.drawContours(img_contour, contours[cnt], -1, (255, 0, 255), 2)
+            classification += "other"
+            object_detected += 1
+            out_file.write("Object Id: " + str(object_detected) + " | Area: " + str(area) + " | Perimeter: " +
+                           str(perimeter) + " | Classification:" + classification + "\n")
+        elif 84 <= perimeter < 90:
+            cv2.drawContours(img_contour, contours[cnt], -1, (255, 0, 0), 2)
+            classification += "other"
+            object_detected += 1
+            out_file.write("Object Id: " + str(object_detected) + " | Area: " + str(area) + " | Perimeter: " +
+                           str(perimeter) + " | Classification:" + classification + "\n")
 
     out_file.write("Frame index: " + str(n_frame) + " | Object Detected: " + str(object_detected) + "\n")
     out_file.write("--------------------------------------------------------------\n")
@@ -103,7 +102,8 @@ def detect_false_object(contours, gray, background, img_contour):
 
     for cnt in range(len(contours)):
         area = round(cv2.contourArea(contours[cnt]))
-        if 500 < area < 740:
+        perimeter = round(cv2.arcLength(contours[cnt], True))
+        if 80 < perimeter < 130 and area < 680:
             size = len(contours[cnt])
             for j in range(size):
                 y = contours[cnt][j][0][0]
@@ -135,13 +135,3 @@ def detect_false_object(contours, gray, background, img_contour):
                     y = contours[cnt][j][0][0]
                     x = contours[cnt][j][0][1]
                     cv2.circle(img_contour, (y, x), 1, (0, 0, 255), -1)
-
-
-
-
-
-
-
-
-
-

@@ -54,7 +54,7 @@ while run:
 
             ut.show(Contours=img_contour, Morphology=img_morphology)
 
-            cv2.waitKey(50)
+            cv2.waitKey(90)
 
             print(nFrame)
 
@@ -64,4 +64,3 @@ while run:
 # When everything done, release the capture
 camera.release()
 cv2.destroyAllWindows()
-
